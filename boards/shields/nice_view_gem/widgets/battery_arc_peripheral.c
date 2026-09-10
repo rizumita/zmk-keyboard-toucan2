@@ -32,7 +32,7 @@ static void draw_dot_peripheral(lv_obj_t *canvas, int cx, int cy, int r, bool fi
     lv_canvas_draw_rect(canvas, cx - r, cy - r, r * 2, r * 2, &dsc);
 }
 
-static void draw_battery_arc_peripheral(lv_obj_t *canvas, const lv_point_t *dots, uint8_t level, bool blink_enabled)
+static void draw_battery_arc_peripheral(lv_obj_t *canvas, const lv_point_t *dots, uint8_t level)
 {
     int filled = (level + 9) / 10;
     if (filled > BATTERY_DOTS) filled = BATTERY_DOTS;
@@ -49,7 +49,11 @@ static void draw_battery_labels_peripheral(lv_obj_t *canvas, uint8_t level)
     lv_canvas_draw_text(canvas, 81, 31, 56, &label_dsc, "R");
 
     char buf[8];
-    snprintf(buf, sizeof(buf), "%d", level);
+    if (level == 0) {
+        snprintf(buf, sizeof(buf), "?");
+    } else {
+        snprintf(buf, sizeof(buf), "%d", level);
+    }
     lv_draw_label_dsc_t label_dsc_txt;
     init_label_dsc(&label_dsc_txt, LVGL_FOREGROUND, &quinquefive_8, LV_TEXT_ALIGN_CENTER);
     lv_canvas_draw_text(canvas, 81, 45, 56, &label_dsc_txt, buf);
@@ -57,8 +61,6 @@ static void draw_battery_labels_peripheral(lv_obj_t *canvas, uint8_t level)
 
 void draw_battery_peripheral_status(lv_obj_t *canvas, const struct status_state *state) {
     uint8_t level = state->battery_p;
-    if (level > 0) {
-        draw_battery_arc_peripheral(canvas, bat_dots_peripheral, level, true);
-        draw_battery_labels_peripheral(canvas, level);
-    }
+    draw_battery_arc_peripheral(canvas, bat_dots_peripheral, level);
+    draw_battery_labels_peripheral(canvas, level);
 }

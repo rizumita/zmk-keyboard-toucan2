@@ -32,7 +32,7 @@ static void draw_dot(lv_obj_t *canvas, int cx, int cy, int r, bool filled)
     lv_canvas_draw_rect(canvas, cx - r, cy - r, r * 2, r * 2, &dsc);
 }
 
-static void draw_battery_arc(lv_obj_t *canvas, const lv_point_t *dots, uint8_t level, bool blink_enabled)
+static void draw_battery_arc(lv_obj_t *canvas, const lv_point_t *dots, uint8_t level)
 {
     /* How many dots should be filled: level 10% -> 1 dot, 100% -> 10 dots */
     int filled = (level + 9) / 10;   /* round up */
@@ -43,12 +43,12 @@ static void draw_battery_arc(lv_obj_t *canvas, const lv_point_t *dots, uint8_t l
     }
 }
 
-static void draw_battery_labels(lv_obj_t *canvas, uint8_t level)
+static void draw_battery_labels(lv_obj_t *canvas, uint8_t level, bool charging)
 {
 
     lv_draw_label_dsc_t label_dsc;
     init_label_dsc(&label_dsc, LVGL_FOREGROUND, &quinquefive_12, LV_TEXT_ALIGN_CENTER);
-    lv_canvas_draw_text(canvas, 9, 31, 56, &label_dsc, "L");
+    lv_canvas_draw_text(canvas, 9, 31, 56, &label_dsc, charging ? "L+" : "L");
 
     char buf[8];
     snprintf(buf, sizeof(buf), "%d", level);
@@ -58,6 +58,6 @@ static void draw_battery_labels(lv_obj_t *canvas, uint8_t level)
 }
 
 void draw_battery_status(lv_obj_t *canvas, const struct status_state *state) {
-    draw_battery_arc(canvas, bat_dots_left, state->battery, true);
-    draw_battery_labels(canvas, state->battery);
+    draw_battery_arc(canvas, bat_dots_left, state->battery);
+    draw_battery_labels(canvas, state->battery, state->charging);
 }

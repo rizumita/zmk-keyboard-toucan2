@@ -116,14 +116,7 @@ ZMK_SUBSCRIPTION(widget_battery_status, zmk_usb_conn_state_changed);
 // R
 static void set_battery_peripheral_status(struct zmk_widget_screen *widget,
                                struct battery_peripheral_status_state state) {
-#if IS_ENABLED(CONFIG_USB_DEVICE_STACK)
-    widget->state.charging_p = state.usb_present;
-#endif /* IS_ENABLED(CONFIG_USB_DEVICE_STACK) */
-
-    uint8_t level;
-    zmk_split_central_get_peripheral_battery_level(0, &level);
-
-    widget->state.battery_p = level;
+    widget->state.battery_p = state.level;
     draw_top(widget->obj, widget->cbuf, &widget->state);
 }
 
@@ -135,13 +128,16 @@ static void battery_peripheral_status_update_cb(struct battery_peripheral_status
 
 static struct battery_peripheral_status_state battery_peripheral_status_get_state(const zmk_event_t *eh) {
     const struct zmk_peripheral_battery_state_changed *ev = as_zmk_peripheral_battery_state_changed(eh);
+    uint8_t level = 0;
 
+    if (ev != NULL) {
+        level = ev->state_of_charge;
+    } else {
+        (void)zmk_split_central_get_peripheral_battery_level(0, &level);
+    }
 
     return (struct battery_peripheral_status_state){
-        .level = ev->state_of_charge,
-#if IS_ENABLED(CONFIG_USB_DEVICE_STACK)
-        .usb_present = zmk_usb_is_powered(),
-#endif /* IS_ENABLED(CONFIG_USB_DEVICE_STACK) */
+        .level = level,
     };
 }
 
@@ -235,8 +231,7 @@ static int display_activity_event_handler(const zmk_event_t *eh) {
     switch (ev->state) {
     case ZMK_ACTIVITY_ACTIVE:
         set_sleep_screen_active(false);
-        // No need to force a redraw, it will happen automatically if really coming back from sleep (ACTIVE also comes after IDLE)
-        //force_redraw_all_widgets();
+        force_redraw_all_widgets();
         break;
     case ZMK_ACTIVITY_SLEEP:
         set_sleep_screen_active(true);
@@ -309,4 +304,3 @@ int zmk_widget_screen_init(struct zmk_widget_screen *widget, lv_obj_t *parent) {
 }
 
 lv_obj_t *zmk_widget_screen_obj(struct zmk_widget_screen *widget) { return widget->obj; }
-
